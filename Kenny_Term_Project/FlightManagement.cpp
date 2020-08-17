@@ -5,32 +5,7 @@
 #include "Flight.h"
 #include <vector>
 #include "Seat.h"
-
-#define TEXTFILENAME "Flight_Information.txt"
-
-void displayInitialMessage();
-void displayOptions();
-char selectOption();
-void printRows(int numSeats, int currentRow);
-Flight readTextFile();
-void writeTextFile(Flight& f);
-void displayAircraftSeatMap(Flight& flight);
-void printRows(Flight& f, int currentRow);
-void printCenteredText(int totalTextLength, std::string& text);
-void showPassengerInformation(Flight& f);
-void print76DashesInALine();
-void cleanStandardInputStream();
-void pressReturn();
-void addPassenger(Flight& flight);
-void removePassenger(Flight& flight);
-int checkIfNameIsValid(std::string& name);
-void removeExcessSpaces(std::string& str);
-void formatPhoneNumber(std::string& phoneNum);
-int checkIfPhoneNumberIsValid(const std::string& phoneNum);
-int isSeatInvalid(const Flight& flight, char seat);
-int isRowInvalid(const Flight& flight, int row);
-int isSeatTaken(const Flight& flight, int row, char seat);
-int isIdTaken(const Flight& flight, int id);
+#include "FlightManagement.h"
 
 int main(void)
 {
@@ -71,97 +46,110 @@ int main(void)
 
 void addPassenger(Flight& flight)
 {
+	std::string strId;
 	int id;
-	std::cout<<"Please enter the passenger id: ";
-	std::cin>>id;
-	while((!std::cin.good()) || isIdTaken(flight, id))
+	
+	while(1)
 	{
-		if(isIdTaken(flight, id))
-			std::cout<<"That id is taken. Please choose another id"<<std::endl;
-		else if(!std::cin.good())
+		std::cout<<"Please enter the passenger id: ";
+		getline(std::cin, strId, '\n');
+		removeExcessSpaces(strId);
+		id = convertStrtoInt(strId);
+		if(id == 0)
 		{
 			std::cout<<"That is not a valid id. Please try again"<<std::endl;
-			cleanStandardInputStream();
 		}
-		std::cout<<"Please enter the passenger id: ";
-		std::cin>>id;
-		std::cout<<std::endl;
+		else if(isIdTaken(flight, id))
+			std::cout<<"That id is taken. Please choose another id"<<std::endl;
+			
+		else
+			break;
 	}
 	
 	std::string firstName;
-	std::cout<<"Please enter the passenger first name: ";
-	cleanStandardInputStream();
-	getline(std::cin, firstName, '\n');
-	while(!checkIfNameIsValid(firstName))
+	while(1)
 	{
-		std::cout<<"That is not a valid first name. Please try again"<<std::endl;
-		std::cout<<"Please enter the passenger first name: ";
+		std::cout<<"Please enter the passenger's first name: ";
 		getline(std::cin, firstName, '\n');
-		std::cout<<std::endl;
+		removeExcessSpaces(firstName);
+		if(!checkIfNameIsValid(firstName))
+			std::cout<<"That is not a valid first name. Please try again"<<std::endl;
+		else
+			break;
 	}
 	
 	std::string lastName;
-	std::cout<<"Please enter the passenger last name: ";
-	getline(std::cin, lastName, '\n');
-	while(!checkIfNameIsValid(lastName))
+	while(1)
 	{
-		std::cout<<"That is not a valid first name. Please try again"<<std::endl;
-		std::cout<<"Please enter the passenger last name: ";
+		std::cout<<"Please enter the passenger's last name: ";
 		getline(std::cin, lastName, '\n');
-		std::cout<<std::endl;
+		removeExcessSpaces(lastName);
+		if(!checkIfNameIsValid(lastName))
+			std::cout<<"That is not a valid last name. Please try again"<<std::endl;
+		else
+			break;
 	}
 	
 	std::string phoneNumber;
-	std::cout<<"Please enter the passenger's phone number: ";
-	getline(std::cin, phoneNumber, '\n');
-	std::cout<<std::endl;
-	while(!checkIfPhoneNumberIsValid(phoneNumber))
+	while(1)
 	{
-		std::cout<<"That is not a valid phone number. Please try again"<<std::endl;
 		std::cout<<"Please enter the passenger's phone number: ";
 		getline(std::cin, phoneNumber, '\n');
-		std::cout<<std::endl;
+		removeExcessSpaces(phoneNumber);
+		if(!checkIfPhoneNumberIsValid(phoneNumber))
+			std::cout<<"That is not a valid phone number. Please try again"<<std::endl;
+		else
+			break;
 	}
 	formatPhoneNumber(phoneNumber);
 	
+	std::string strRow;
 	int row;
+	std::string strSeat;
 	char seat;
-	std::cout<<"Please enter the passenger's desired row: ";
-	std::cin>>row;
-	std::cout<<"Please enter the passenger's desired seat: ";
-	std::cin>>seat;
-	while((isSeatInvalid(flight, seat)) || (isRowInvalid(flight, row)) || (isSeatTaken(flight, row, seat)))
+	while(1)
 	{
-		if(isSeatInvalid(flight, seat))
-			std::cout<<"That seat is not valid. Please try again."<<std::endl;
-		if(isRowInvalid(flight, row))
-			std::cout<<"That row is not valid. Please try again."<<std::endl;
-		if(isSeatTaken(flight, row, seat))
-			std::cout<<"That seat is taken. Please try again."<<std::endl;
+		std::cout<<std::endl;
 		std::cout<<"Please enter the passenger's desired row: ";
-		std::cin>>row;
+		getline(std::cin, strRow, '\n');
 		std::cout<<"Please enter the passenger's desired seat: ";
-		std::cin>>seat;
+		getline(std::cin, strSeat, '\n');
+		removeExcessSpaces(strRow);
+		removeExcessSpaces(strSeat);
+		row = returnValidRow(flight, strRow);
+		seat = returnValidSeat(flight, strSeat);
+		if(row == 0)
+			std::cout<<"That row is not valid. Please try again."<<std::endl;
+		else if(seat == 0)
+			std::cout<<"That seat is not valid. Please try again."<<std::endl;
+		else if(isSeatTaken(flight, row, seat))
+			std::cout<<"That seat is taken. Please try again."<<std::endl;
+		else
+			break;
 	}
 	
 	flight.addPassenger(Passenger(firstName, lastName, phoneNumber, Seat(row, seat), id));
 	
-	cleanStandardInputStream();
 	pressReturn();
 }
 
-int isSeatInvalid(const Flight& flight, char seat)
+char returnValidSeat(const Flight& flight, const std::string& strSeat)
 {
-	if(seat > (flight.getNumSeats() + 'A' - 1))
-		return 1;
-	return 0;
+	if(strSeat.size() != 1)
+		return 0;
+
+	if((strSeat.at(0) > (flight.getNumSeats() + 'A' - 1)) || (strSeat.at(0) < 'A'))
+		return 0;
+	
+	return strSeat.at(0);
 }
 
-int isRowInvalid(const Flight& flight, int row)
+int returnValidRow(const Flight& flight, const std::string& strRow)
 {
-	if(row > flight.getNumRows())
-		return 1;
-	return 0;
+	int row = convertStrtoInt(strRow);
+	if((row > flight.getNumRows()) || (row <= 0))
+		return 0;
+	return row;
 }
 
 int isSeatTaken(const Flight& flight, int row, char seat)
@@ -173,7 +161,7 @@ int isSeatTaken(const Flight& flight, int row, char seat)
 
 int isIdTaken(const Flight& flight, int id)
 {
-	for(int i = 0; i < flight.getSizeOfPassengerList(); i++)
+	for(int i = 0; i < int(flight.getPassengerList().size()); i++)
 	{
 		if(id == flight.getPassengerList().at(i).getId())
 		{
@@ -185,12 +173,12 @@ int isIdTaken(const Flight& flight, int id)
 
 void removeExcessSpaces(std::string& str)
 {
-	while(str.at(0) == ' ')
+	while((str.size() != 0) && ((str.at(0) == ' ') || (str.at(0) == '\n') || (str.at(0) == '	')))
 	{
 		str.erase(0, 1);
 	}
 	
-	while(str.at(str.size() - 1) == ' ')
+	while((str.size() != 0) && ((str.at(str.size() - 1) == ' ') || (str.at(str.size() - 1) == '\n') || (str.at(str.size() - 1) == '	')))
 	{
 		str.erase(str.size() - 1, 1);
 	}
@@ -230,38 +218,79 @@ int checkIfPhoneNumberIsValid(const std::string& phoneNum)
 	return 1;
 }
 
-int checkIfNameIsValid(std::string& name)
+int checkIfNameIsValid(const std::string& name)
 {
-	removeExcessSpaces(name);
-	if(name.size() > 19)
+	if((name.size() > 19) || (name.size() == 0))
 		return 0;
 	return 1;
 }
 
 void removePassenger(Flight& flight)
 {
-	int id;
-	std::cout<<"Please enter the id of the passenger that needs to be removed: ";
-	std::cin>>id;
-	while((!std::cin.good()) || (!flight.removePassenger(id)))
+	std::string strId;
+	
+	while(1)
 	{
-		if(!std::cin.good())
+		std::cout<<"Please enter the id of the passenger that needs to be removed: ";
+		getline(std::cin, strId, '\n');
+		removeExcessSpaces(strId);
+		int id = convertStrtoInt(strId);
+		
+		if(id == 0)
 		{
-			std::cout<<"That is not a valid id. Please try again";
-			cleanStandardInputStream();
+			std::cout<<"That is not a valid id. Please try again"<<std::endl;
 		}
 		else if(!flight.removePassenger(id))
-			std::cout<<"A passenger with that id does not exist. Please try again";
-		std::cout<<"Please enter the id of the passenger that needs to be removed: ";
-		std::cin>>id;
+			std::cout<<"A passenger with that id does not exist. Please try again"<<std::endl;
+		else
+			break;
 	}
-	cleanStandardInputStream();
 	pressReturn();
+}
+
+int validInt(const std::string& s)
+{
+	int valid = 1;
+	int i;
+
+	if (int(s.size()) == 0)
+		valid = 0;
+	else if((int(s.size()) == 1) && ((s.at(0) == ' ') || (s.at(0) == '\n') || (s.at(0) == '	')))
+		valid = 0;
+	else
+	{
+		for(i = 0; i < int(s.size()); i++)
+		{
+			if(s.at(i) < '0' ||  s.at(i) > '9')
+			{
+				valid = 0;
+				break;
+			}
+		}
+	}
+  
+	return valid;
+}
+
+int convertStrtoInt(const std::string& s)
+{
+	int sum = 0;
+	if(validInt(s))
+	{
+		int i;
+		for(i = 0; i < int(s.size()); i++)
+		{
+			sum = 10 * sum + (s.at(i) - '0');
+		}
+	}
+	else
+		return 0;
+
+	return sum;
 }
 
 void pressReturn()
 {
-	
 	std::cout<<std::endl<<"<<<Press Return to Continue>>>";
 	char c;
 	do
@@ -269,35 +298,24 @@ void pressReturn()
 		c = getchar();
 	}while (c != '\n');
 	std::cout<<std::endl;
-	
-	
-	
 }
 
 char selectOption()
 {
-	char ch = 0;
+	std::string input;
 	displayOptions();
-	std::cin>>ch;
-	while(!((ch >= '1') && (ch <= '6')))
+	while(1)
 	{
-		cleanStandardInputStream();
-		std::cout<<"That input is not valid. Please try again"<<std::endl;
 		std::cout<<"Enter your choice: (1, 2, 3, 4, 5, or 6) ";
-		std::cin>>ch;
+		getline(std::cin, input, '\n');
+		removeExcessSpaces(input);
+		if((input.size() != 1) || ((input.at(0) < '1') || (input.at(0) > '6')))
+			std::cout<<"That is not an option. Please try again"<<std::endl;
+		else
+			break;
 	}
 	std::cout<<std::endl;
-	return ch;
-}
-	
-void cleanStandardInputStream()
-{
-	std::cin.clear();
-	int leftover;
-	do
-	{
-		leftover = std::cin.get();
-	}while((leftover!='\n')&&(leftover!=EOF));
+	return input.at(0);
 }
 
 void displayInitialMessage()
@@ -318,7 +336,6 @@ void displayOptions()
 	std::cout<<"5. Save data"<<std::endl;
 	std::cout<<"6. Quit"<<std::endl;
 	std::cout<<std::endl;
-	std::cout<<"Enter your choice: (1, 2, 3, 4, 5, or 6) ";
 }
 
 Flight readTextFile()
@@ -330,145 +347,155 @@ Flight readTextFile()
 		exit(1);
 	}
 	
-	char c = inputStream.get();
-	std::string flightName("");
-	
-	while((c == ' ') || (c == '\n') || (c == '	'))
+	std::string currentLine;
+	getline(inputStream, currentLine, '\n');
+	removeExcessSpaces(currentLine);
+	if(currentLine.size() == 0)
 	{
-		c = inputStream.get();
+		std::cout<<"This file is not valid. This program will now terminate";
+		exit(1);
 	}
 	
-	do
+	int newWord = 1;
+	int secondStr = 0;
+	int thirdStr = 0;
+	
+	for(int i = 0; i < int(currentLine.size()); i++)
 	{
-		flightName.push_back(c);
-		c = inputStream.get();
-	} while((c != ' ') && (c!= '\n') && (c!= '	'));
+		if((currentLine.at(i) == ' ') || (currentLine.at(i) == '	'))
+		{
+			newWord = 1;
+		}
+		else if(newWord)
+		{
+			newWord = 0;
+			if(secondStr == 0)
+				secondStr = i;
+			else if(thirdStr == 0)
+				thirdStr = i;
+			else
+			{
+				std::cout<<"This file is not valid. The program will terminate now"<<std::endl;
+				exit(1);
+			}
+		}
+	}
 	
+	if(secondStr == 0 || thirdStr == 0)
+	{
+		std::cout<<"This file is not valid. The program will terminate now"<<std::endl;
+		exit(1);
+	}
+				
+	std::string flightNum = currentLine.substr(0, secondStr);
+	std::string numRowsStr = currentLine.substr(secondStr, thirdStr - secondStr);
+	std::string numSeatsStr = currentLine.substr(thirdStr, 1);
+	removeExcessSpaces(flightNum);
+	removeExcessSpaces(numRowsStr);
+	removeExcessSpaces(numSeatsStr);
+	int numRows = convertStrtoInt(numRowsStr);
+	int numSeats = convertStrtoInt(numSeatsStr);
 	
-	int rows;
-	int seats;
-	
-	inputStream>>rows;
-	
-	inputStream>>seats;
+	Flight flight(numRows, numSeats, flightNum);
 
-	Flight flight(rows, seats, flightName);
-	
 	while(!inputStream.eof())
 	{
-		std::string firstName;
-		std::string lastName;
-		std::string phoneNumber;
-		int id;
+		getline(inputStream, currentLine, '\n');
+		if(currentLine.size() == 0)
+			break;
+		removeExcessSpaces(currentLine);
+		std::string firstName = currentLine.substr(0, 20);
+		removeExcessSpaces(firstName);
+		std::string lastName = currentLine.substr(20, 20);
+		removeExcessSpaces(lastName);
+		std::string phoneNumber = currentLine.substr(40, 20);
+		removeExcessSpaces(phoneNumber);
+		std::string fullSeat = currentLine.substr(60, 4);
+		removeExcessSpaces(fullSeat);
+		std::string idStr = currentLine.substr(64, currentLine.size() - 64);
+		removeExcessSpaces(idStr);
 		
-		while((c == ' ') || (c == '\n') || (c == '	'))
+		std::string rowStr;
+		char seat;
+		for(int i = 0; i < int(fullSeat.size()); i++)
 		{
-			c = inputStream.get();
+			if(fullSeat.at(i) >= '0' && fullSeat.at(i) <= '9')
+				rowStr.append(1, fullSeat.at(i));
+			else if(fullSeat.at(i) >= 'A' && fullSeat.at(i) <= 'Z')
+			{
+				seat = fullSeat.at(i);
+			}
 		}
 		
-		do
-		{
-			firstName.push_back(c);
-			c = inputStream.get();
-		} while((c != ' ') && (c!= '\n') && (c!= '	'));
+		removeExcessSpaces(rowStr);
+		removeExcessSpaces(idStr);
 		
-		while((c == ' ') || (c == '\n') || (c == '	'))
-		{
-			c = inputStream.get();
-		}
-		
-		do
-		{
-			lastName.push_back(c);
-			c = inputStream.get();
-		} while((c != ' ') && (c!= '\n') && (c!= '	'));
-		
-		while((c == ' ') || (c == '\n') || (c == '	'))
-		{
-			c = inputStream.get();
-		}
-		
-		do
-		{
-			phoneNumber.push_back(c);
-			c = inputStream.get();
-		} while((c != ' ') && (c!= '\n') && (c!= '	'));
-		
-		int i;
-		
-		inputStream>>i;
-		c = inputStream.get();
-		
-		Seat seat(i, c);
-		
-		inputStream>>id;
-	
-		flight.addPassenger(Passenger(firstName, lastName, phoneNumber, seat, id));
-		
-		c = inputStream.get();
-		
-		while((c == ' ') || (c == '\n') || (c == '	'))
-		{
-			c = inputStream.get();
-		}
+		int row = convertStrtoInt(rowStr);
+		int id = convertStrtoInt(idStr);
+
+		Seat flightSeat(row, seat);
+		flight.addPassenger(Passenger(firstName, lastName, phoneNumber, flightSeat, id));
 	}
-	
 	inputStream.close();
 	return flight;
-	
 }
 
-void writeTextFile(Flight& f)
+void writeTextFile(const Flight& f)
 {
-	char ch = 0;
+	std::string input;
 	do
 	{
-		cleanStandardInputStream();
-		std::cout<<"Do you want to save the data in \"Flight_Information.txt\"?"<<std::endl;
+		std::cout<<"Do you want to save the data in "<<TEXTFILENAME<<"?"<<std::endl;
 		std::cout<<"Please answer <Y or N>: ";
-		ch = getchar();
-		if(ch == 'Y')
-			break;
-		else if(ch == 'N')
+		getline(std::cin, input, '\n');
+		removeExcessSpaces(input);
+		if(input.size() == 1)
 		{
-			pressReturn();
-			return;
+			if(input.at(0) == 'Y')
+				break;
+			else if(input.at(0) == 'N')
+			{
+				pressReturn();
+				return;
+			}
 		}
-		else
-			std::cout<<"That input is not valid. Please try again"<<std::endl;
+		std::cout<<"That input is not valid. Please try again"<<std::endl;
 	}while(1);
+	
 	std::ofstream outputStream(TEXTFILENAME);
 	if(outputStream.fail())
 	{
 		std::cout<<"Opening the flight information text file failed. This program will now terminate";
 		exit(1);
 	}
-	
-	outputStream<<std::left<<std::setw(10)<<f.getFlightNumber();
+	outputStream<<std::left<<std::setw(9)<<f.getFlightNumber();
 	outputStream<<std::setw(6)<<f.getNumRows();
-	outputStream<<std::setw(6)<<f.getNumSeats()<<std::endl;
-	
-	for(int i = 0; i < f.getSizeOfPassengerList(); i++)
+	outputStream<<std::setw(1)<<f.getNumSeats()<<std::endl;
+	for(int i = 0; i < int(f.getPassengerList().size()); i++)
 	{
-		outputStream<<std::setw(20)<<f.getPassengerList().at(i).getFirstName()<<" ";
-		outputStream<<std::setw(20)<<f.getPassengerList().at(i).getLastName()<<" ";
-		outputStream<<std::setw(16)<<f.getPassengerList().at(i).getPhoneNumber()<<" ";
+		outputStream<<std::setw(20)<<f.getPassengerList().at(i).getFirstName();
+		outputStream<<std::setw(20)<<f.getPassengerList().at(i).getLastName();
+		outputStream<<std::setw(20)<<f.getPassengerList().at(i).getPhoneNumber();
 		outputStream<<std::setw(1)<<f.getPassengerList().at(i).getSeat().getRow();
-		outputStream<<std::setw(1)<<f.getPassengerList().at(i).getSeat().getSeat()<<" ";
-		outputStream<<std::setw(8)<<f.getPassengerList().at(i).getId()<<std::endl;
+		int field;
+		if(f.getPassengerList().at(i).getSeat().getRow() < 10)
+			field = 3;
+		else
+			field = 2;
+		outputStream<<std::setw(field)<<f.getPassengerList().at(i).getSeat().getSeat()<<" ";
+		outputStream<<std::setw(1)<<f.getPassengerList().at(i).getId();
+		if(i != int(f.getPassengerList().size()) -1)
+			outputStream<<std::endl;
 	}
-	
 	outputStream.close();
+	
 	std::cout<<std::endl;
-	std::cout<<"All the data in the passenger list was saved into \"Flight_Information.txt\"?"<<std::endl;
-	cleanStandardInputStream();
+	std::cout<<"All the data in the passenger list was saved into "<<TEXTFILENAME<<std::endl;
 	pressReturn();
 }
 
-void displayAircraftSeatMap(Flight& flight)
-{
-	std::cout << std::left;
-	
+void displayAircraftSeatMap(const Flight& flight)
+{	
 	std::string title("Aircraft Seat Map");
 	printCenteredText((flight.getNumSeats() * 4) + 4, title);
 	
@@ -490,13 +517,12 @@ void displayAircraftSeatMap(Flight& flight)
 	{
 		printRows(flight, i);
 	}
-	
-	cleanStandardInputStream();
 	pressReturn();
 }
 
-void printRows(Flight& flight, int currentRow)
+void printRows(const Flight& flight, int currentRow)
 {
+	std::cout << std::left;
 	std::cout<< std::setw(3) << currentRow + 1 << "|";
 	for(int i = 0; i < flight.getNumSeats(); i++)
 	{
@@ -512,7 +538,7 @@ void printRows(Flight& flight, int currentRow)
 	std::cout<<std::endl;
 }
 
-void printCenteredText(int totalTextLength, std::string& text)
+void printCenteredText(int totalTextLength, const std::string& text)
 {
 	int length = text.size();
 	int numSpaces = (totalTextLength - length) / 2;
@@ -524,35 +550,27 @@ void printCenteredText(int totalTextLength, std::string& text)
 	std::cout<<std::endl;
 }
 
-void showPassengerInformation(Flight& f)
+void showPassengerInformation(const Flight& f)
 {	
 	std::cout<<std::left;
-	std::cout<<std::setw(21)<<"First Name";
-	std::cout<<std::setw(21)<<"Last Name";
-	std::cout<<std::setw(16)<<"Phone";
+	std::cout<<std::setw(20)<<"First Name";
+	std::cout<<std::setw(20)<<"Last Name";
+	std::cout<<std::setw(20)<<"Phone";
 	std::cout<<std::setw(5)<<"Row";
 	std::cout<<std::setw(5)<<"Seat";
-	std::cout<<std::setw(8)<<"ID"<<std::endl;
-	print76DashesInALine();
-	for(int i = 0; i < f.getSizeOfPassengerList(); i++)
+	std::cout<<std::setw(5)<<"ID"<<std::endl;
+	std::cout<<"---------------------------------------------------------------------------"<<std::endl; //75 dashes
+	for(int i = 0; i < int(f.getPassengerList().size()); i++)
 	{
-		std::cout<<std::setw(21)<<f.getPassengerList().at(i).getFirstName();
-		std::cout<<std::setw(21)<<f.getPassengerList().at(i).getLastName();
-		std::cout<<std::setw(16)<<f.getPassengerList().at(i).getPhoneNumber();
+		std::cout<<std::setw(20)<<f.getPassengerList().at(i).getFirstName();
+		std::cout<<std::setw(20)<<f.getPassengerList().at(i).getLastName();
+		std::cout<<std::setw(20)<<f.getPassengerList().at(i).getPhoneNumber();
 		std::cout<<std::setw(5)<<f.getPassengerList().at(i).getSeat().getRow();
 		std::cout<<std::setw(5)<<f.getPassengerList().at(i).getSeat().getSeat();
-		std::cout<<std::setw(8)<<f.getPassengerList().at(i).getId()<<std::endl;
-		print76DashesInALine();
+		std::cout<<std::setw(5)<<f.getPassengerList().at(i).getId()<<std::endl;
+		std::cout<<"---------------------------------------------------------------------------"<<std::endl;
 	}
-	cleanStandardInputStream();
+
 	pressReturn();
 }
-
-void print76DashesInALine()
-{
-	std::cout<<"----------------------------------------------------------------------------"<<std::endl;
-}
-	
-
-
 	

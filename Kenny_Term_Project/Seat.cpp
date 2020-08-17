@@ -1,4 +1,3 @@
-
 #include "Seat.h"
 
 Seat::Seat()

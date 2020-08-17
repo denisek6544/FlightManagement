@@ -4,9 +4,6 @@
 
 Passenger::Passenger()
 {
-	firstName = "";
-	lastName = "";
-	phoneNumber = "";
 	id = 0;
 }
 
@@ -44,22 +41,22 @@ int Passenger::getId()const
 	return id;
 }
 		
-void Passenger::setFirstName(std::string fName)
+void Passenger::setFirstName(std::string& fName)
 {
 	firstName = fName;
 }
 
-void Passenger::setLastName(std::string lName)
+void Passenger::setLastName(std::string& lName)
 {
 	lastName = lName;
 }
 
-void Passenger::setPhoneNumber(std::string phoneNum)
+void Passenger::setPhoneNumber(std::string& phoneNum)
 {
 	phoneNumber = phoneNum;
 }
 
-void Passenger::setSeat(Seat s)
+void Passenger::setSeat(Seat& s)
 {
 	seat = s;
 }
